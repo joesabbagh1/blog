@@ -44,26 +44,26 @@ const socialCount = SOCIALS.filter(social => social.active).length;
       <p>
         I'm a versatile engineer with a background in DevOps, Cloud Computing,
         and Front-End Development. I am excited to document my learning journey,
-        from mastering Kubernetes and setting up my homelab, to diving into
-        cloud computing, refining my skills with Vim, enhancing CI/CD pipelines,
-        and optimizing my note-taking strategies.
+        which includes, mastering Kubernetes and setting up my homelab, diving
+        into the Cloud, sharing some Vim tips and tricks, and talk about my
+        note-taking system.
         <br />
         <br />
-        I'm a
+        I'm a certified
         <LinkButton
           className="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
           href="https://www.credly.com/badges/d1faae5e-1505-4674-a0dc-32340ae8bdb5/public_url"
         >
-          Certified AWS Developer
+          AWS Developer - Associate
         </LinkButton>
         and
         <LinkButton
           className="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
           href="https://www.credly.com/badges/8fb5a7c0-1ceb-49a2-9645-b23463014662/public_url"
         >
-          DevOps Engineer
-        </LinkButton>, and currently studying to become a Certified Kubernetes
-        Application Developer.
+          DevOps Engineer - Professional
+        </LinkButton> and currently studying to become a Certified Kubernetes Application
+        Developer.
       </p>
 
       {
@@ -79,7 +79,7 @@ const socialCount = SOCIALS.filter(social => social.active).length;
 
     <Hr />
 
-    {
+    <!-- {
       featuredPosts.length > 0 && (
         <>
           <section id="featured">
@@ -97,7 +97,7 @@ const socialCount = SOCIALS.filter(social => social.active).length;
           {recentPosts.length > 0 && <Hr />}
         </>
       )
-    }
+    } -->
 
     {
       recentPosts.length > 0 && (

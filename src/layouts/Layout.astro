@@ -20,7 +20,6 @@ export interface Props {
 const {
   title = SITE.title,
   author = SITE.author,
-  profile = SITE.profile,
   description = SITE.desc,
   ogImage = SITE.ogImage,
   canonicalURL = new URL(Astro.url.pathname, Astro.site).href,
@@ -45,7 +44,6 @@ const structuredData = {
     {
       "@type": "Person",
       name: `${author}`,
-      url: `${profile}`,
     },
   ],
 };
