@@ -4,7 +4,7 @@ title: "About"
 ---
 
 I'm a versatile engineer with a background in DevOps, Cloud Computing,
-        and Front-End Development. I am excited to document my learning journey,
+       and Front-End Development. I am excited to document my learning journey,
         which includes, mastering Kubernetes and setting up my homelab, diving
         into the Cloud, sharing some Vim tips and tricks, and talk about my
         note-taking system.
