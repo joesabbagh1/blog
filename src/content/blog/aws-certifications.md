@@ -1,12 +1,12 @@
 ---
 author: Joe Sabbagh 
 pubDatetime: 2024-01-30T15:57:52.737Z
-title: How I got my AWS certifications with no working experience
+title: My Journey to AWS Certifications Without Prior Experience
 featured: false
 tags:
   - aws
   - certification
-description: asdf
+description: Learn how I achieved AWS certifications without prior working experience, the challenges I faced, and the strategies I used to succeed.
 ---
 <base target="_blank">
 
