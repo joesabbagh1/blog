@@ -8,6 +8,7 @@ tags:
   - certification
 description: asdf
 ---
+<base target="_blank">
 
 Since I started my career I have been a Frontend developer and did some full stack internships, I kept asking myself how things are deployed to the internet, how companies build their infrastructures and so on. So as a curious person I wanted to learn more about this subject so i started learning about the cloud and especially AWS.
 
