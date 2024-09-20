@@ -1,6 +1,6 @@
 ---
 author: Joe Sabbagh 
-pubDatetime: 2024-01-30T15:57:52.737Z
+pubDatetime: 2024-09-20
 title: My Journey to AWS Certifications Without Prior Experience
 featured: false
 tags:
