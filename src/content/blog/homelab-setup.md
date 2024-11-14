@@ -1,8 +1,8 @@
 ---
 author: Joe Sabbagh
-pubDatetime: 2024-09-20
+pubDatetime: 2024-11-15
 title: Transforming an Old Laptop into a Kubernetes Homelab
-featured: true
+featured: false
 tags:
   - homelab
   - kubernetes
