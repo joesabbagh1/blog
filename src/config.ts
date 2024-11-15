@@ -4,7 +4,7 @@ export const SITE: Site = {
   website: "https://blog.joehomelab.cc",
   author: "Joe SAbbagh",
   desc: "A documentation of my DevOps learning journey.",
-  title: "Joe's blog",
+  title: "DevOps Blog",
   ogImage: "astropaper-og.jpg",
   lightAndDarkMode: true,
   postPerIndex: 4,
