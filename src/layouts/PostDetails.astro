@@ -64,13 +64,18 @@ const layoutProps = {
   </div>
   <main id="main-content">
     <h1 transition:name={slugifyStr(title)} class="post-title">{title}</h1>
-    <Datetime
-      pubDatetime={pubDatetime}
-      modDatetime={modDatetime}
-      size="lg"
-      className="my-2"
-      readingTime={readingTime}
-    />
+    <div class="flex items-center gap-2">
+      <Datetime
+        pubDatetime={pubDatetime}
+        modDatetime={modDatetime}
+        size="lg"
+        className="my-2"
+      />
+      <span class="italic opacity-80">|</span>
+      <span className={`text-base italic opacity-80`}>
+        {readingTime}
+      </span>
+    </div>
     <article id="article" class="prose mx-auto mt-8 max-w-3xl">
       <Content />
     </article>
