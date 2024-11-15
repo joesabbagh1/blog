@@ -21,6 +21,7 @@ const {
   description,
   ogImage,
   canonicalURL,
+  readingTime, // we can now directly access readingTime from frontmatter
   pubDatetime,
   modDatetime,
   tags,
@@ -68,11 +69,11 @@ const layoutProps = {
       modDatetime={modDatetime}
       size="lg"
       className="my-2"
+      readingTime={readingTime}
     />
     <article id="article" class="prose mx-auto mt-8 max-w-3xl">
       <Content />
     </article>
-
     <ul class="my-8">
       {tags.map(tag => <Tag tag={slugifyStr(tag)} />)}
     </ul>
