@@ -78,7 +78,7 @@ export default async () => {
               fontSize: 28,
             }}
           >
-            <p style={{ fontWeight: "bold" }}>{SITE.author}</p>
+            <p style={{ fontWeight: "bold" }}>{SITE.author} test</p>
           </div>
         </div>
       </div>
