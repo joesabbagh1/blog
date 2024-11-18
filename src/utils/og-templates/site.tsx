@@ -68,18 +68,6 @@ export default async () => {
             <p style={{ fontSize: 72, fontWeight: "bold" }}>{SITE.title}</p>
             <p style={{ fontSize: 28 }}>{SITE.desc}</p>
           </div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              width: "100%",
-              marginBottom: "8px",
-              fontSize: 28,
-            }}
-          >
-            <p style={{ fontWeight: "bold" }}>{SITE.author} test</p>
-          </div>
         </div>
       </div>
     </div>,
