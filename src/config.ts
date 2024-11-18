@@ -5,7 +5,6 @@ export const SITE: Site = {
   author: "Joe SAbbagh",
   desc: "A documentation of my DevOps learning journey.",
   title: "DevOps Blog",
-  ogImage: "astropaper-og.jpg",
   lightAndDarkMode: true,
   postPerIndex: 4,
   postPerPage: 4,

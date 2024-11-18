@@ -79,7 +79,7 @@ export default async () => {
             }}
           >
             <span style={{ overflow: "hidden", fontWeight: "bold" }}>
-              {new URL(SITE.website).hostname} test
+              {new URL(SITE.website).hostname}
             </span>
           </div>
         </div>
