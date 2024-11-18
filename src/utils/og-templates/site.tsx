@@ -78,9 +78,7 @@ export default async () => {
               fontSize: 28,
             }}
           >
-            <span style={{ overflow: "hidden", fontWeight: "bold" }}>
-              {SITE.author}
-            </span>
+            <p style={{ fontWeight: "bold" }}>{SITE.author}</p>
           </div>
         </div>
       </div>
@@ -89,7 +87,9 @@ export default async () => {
       width: 1200,
       height: 630,
       embedFont: true,
-      fonts: (await loadGoogleFonts(SITE.title + SITE.desc)) as FontOptions[],
+      fonts: (await loadGoogleFonts(
+        SITE.title + SITE.desc + SITE.author
+      )) as FontOptions[],
     }
   );
 };
