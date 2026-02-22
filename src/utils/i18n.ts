@@ -1,0 +1,38 @@
+export type Lang = "en" | "fr";
+
+export const translations = {
+    en: {
+        posts: "Posts",
+        postsDesc: "All the articles I've posted.",
+        tags: "Tags",
+        tagsDesc: "All the tags used in posts.",
+        search: "Search",
+        recentPosts: "Recent Posts",
+        allPosts: "All Posts",
+        socialLinks: "Social Links:",
+        heroText: `Welcome to my blog, this is where I'm gonna talk mostly about my homelab and share what I do and what I learn. The homelab is built on Kubernetes, where I host various services and experiment with cloud-native tools.`,
+        heroLine2: `I'm`,
+        heroCertified: `6x AWS Certified`,
+        heroLine3: `and currently doing a master's in cybersecurity at`,
+        openMenu: "Open Menu",
+        closeMenu: "Close Menu",
+        skipToContent: "Skip to content",
+    },
+    fr: {
+        posts: "Articles",
+        postsDesc: "Tous les articles que j'ai publiés.",
+        tags: "Étiquettes",
+        tagsDesc: "Toutes les étiquettes utilisées dans les articles.",
+        search: "Rechercher",
+        recentPosts: "Articles récents",
+        allPosts: "Tous les articles",
+        socialLinks: "Liens sociaux :",
+        heroText: `Bienvenue sur mon blog, c'est ici que je vais parler principalement de mon homelab et partager ce que je fais et ce que j'apprends. Le homelab tourne sur Kubernetes, où j'héberge mes applications et teste des outils cloud-native.`,
+        heroLine2: `Je suis`,
+        heroCertified: `certifié AWS 6 fois`,
+        heroLine3: `et je fais actuellement un master en cybersécurité à l'`,
+        openMenu: "Ouvrir le menu",
+        closeMenu: "Fermer le menu",
+        skipToContent: "Aller au contenu",
+    },
+} as const satisfies Record<Lang, Record<string, string>>;

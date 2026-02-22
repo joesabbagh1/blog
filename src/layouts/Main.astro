@@ -22,16 +22,16 @@ const { props } = Astro;
   {
     "titleTransition" in props ? (
       <h1>
-        {props.pageTitle[0]}
-        <span transition:name={props.titleTransition}>
+        <span data-i18n={props.pageTitle[0].toLowerCase()}>{props.pageTitle[0]}</span>
+        <span transition:name={props.titleTransition} data-i18n={props.pageTitle[1].toLowerCase()}>
           {props.pageTitle[1]}
         </span>
       </h1>
     ) : (
-      <h1>{props.pageTitle}</h1>
+      <h1 data-i18n={props.pageTitle.toLowerCase()}>{props.pageTitle}</h1>
     )
   }
-  <p>{props.pageDesc}</p>
+  <p data-i18n={`${typeof props.pageTitle === "string" ? props.pageTitle.toLowerCase() : props.pageTitle[0].toLowerCase()}Desc`}>{props.pageDesc}</p>
   <slot />
 </main>
 

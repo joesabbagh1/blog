@@ -42,28 +42,30 @@ const socialCount = SOCIALS.filter(social => social.active).length;
       </a> -->
 
       <p>
-        Welcome to my blog! This is where I document my learning journey, tackle
-        technical challenges, and share practical insights. From Kubernetes and
-        AWS tips to note-taking strategies, CI/CD pipelines, and setting up my
-        homelab. I’ll be sharing my projects and the lessons I’ve learned along
-        the way.
+        <span data-i18n="heroText">Welcome to my blog, this is where I'm gonna talk mostly about my homelab and share what I do and what I learn. The homelab is built on Kubernetes, where I host various services and experiment with cloud-native tools.</span>
         <br />
         <br />
-        I'm
+        <span data-i18n="heroLine2">I'm</span>{" "}
         <LinkButton
           className="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
           href="https://www.credly.com/users/joe-michel-sabbagh"
         >
-          5x AWS Certified
+          <span data-i18n="heroCertified">6x AWS Certified</span>
         </LinkButton>
-        and currently studying to become a Certified Kubernetes Application Developer.
+        {" "}<span data-i18n="heroLine3">and currently doing a master's in cybersecurity at</span>{" "}
+        <LinkButton
+          className="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
+          href="https://www.epita.fr/"
+        >
+          EPITA
+        </LinkButton>.
       </p>
 
       {
         // only display if at least one social link is enabled
         socialCount > 0 && (
           <div class="social-wrapper">
-            <div class="social-links">Social Links:</div>
+            <div class="social-links" data-i18n="socialLinks">Social Links:</div>
             <Socials />
           </div>
         )
@@ -95,7 +97,7 @@ const socialCount = SOCIALS.filter(social => social.active).length;
     {
       recentPosts.length > 0 && (
         <section id="recent-posts">
-          <h2>Recent Posts</h2>
+          <h2 data-i18n="recentPosts">Recent Posts</h2>
           <ul>
             {recentPosts.map(
               ({ data, id }, index) =>
@@ -114,7 +116,7 @@ const socialCount = SOCIALS.filter(social => social.active).length;
 
     <div class="all-posts-btn-wrapper">
       <LinkButton href="/posts/">
-        All Posts
+        <span data-i18n="allPosts">All Posts</span>
         <svg xmlns="http://www.w3.org/2000/svg"
           ><path
             d="m11.293 17.293 1.414 1.414L19.414 12l-6.707-6.707-1.414 1.414L15.586 11H6v2h9.586z"
