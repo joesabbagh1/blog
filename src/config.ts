@@ -4,7 +4,7 @@ export const SITE: Site = {
   website: "https://blog.joesabbagh.com",
   author: "Joe SAbbagh",
   desc: "A blog covering bare-metal Kubernetes, GitOps (Flux), Infrastructure as Code (Ansible), local DNS (Pi-hole), advanced networking (Cilium, Traefik), and self-hosted apps.",
-  title: "Joe's Homelab & DevOps Blog",
+  title: "Homelab & DevOps",
   lightAndDarkMode: true,
   postPerIndex: 4,
   postPerPage: 4,
