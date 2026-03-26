@@ -17,7 +17,7 @@ In my [previous homelab posts](https://blog.joesabbagh.com/posts/homelab-upgrade
 
 Until now, my secret management strategy relied entirely on **SOPS and Age**. Everything was encrypted and committed directly into my Git repository alongside my infrastructure manifests. It worked well enough for a while, but it was time to level up to a true enterprise-grade solution.
 
-Here's why I tore down my SOPS setup, how I deployed HashiCorp Vault in High Availability mode, and the crazy story of how I had to execute a "heist" against my own Git history to recover a lost token.
+Here's why I tore down my SOPS setup, how I deployed HashiCorp Vault in High Availability mode, and the story of how I had to execute a "heist" against my own Git history to recover a lost token.
 
 ---
 
@@ -46,7 +46,7 @@ To solve these issues, I introduced **HashiCorp Vault**, the industry standard f
 ### Designing for High Availability (Raft)
 Because Vault now holds the literal keys to the kingdom, if Vault goes down, applications can't boot. To simulate a true enterprise environment, I deployed Vault directly into the cluster as a **High Availability (HA)** deployment using Vault's Integrated Storage (Raft).
 
-Instead of relying on a fragile external database like Consul or Postgres, Raft allows Vault pods to form their own consensus quorum.
+Instead of relying on an external database like Consul or Postgres, Raft allows the Vault pods to store their own data and stay perfectly synced with each other automatically.
 - I deployed **2 replicas** (`vault-0` and `vault-1`).
 - I used standard Kubernetes `NodeAffinity` rules to explicitly prevent the databases from scheduling on my control plane node.
 - I configured Shamir's Secret Sharing to require 3 out of 5 human keys to unseal the database if the cluster ever completely reboots.
@@ -59,7 +59,7 @@ To bridge this gap natively, I deployed the **External Secrets Operator (ESO)**.
 2. You define an `ExternalSecret` custom resource (which looks just like a normal Kubernetes file, but only contains the names of the keys, not the passwords).
 3. ESO automatically reaches into Vault, pulls the raw passwords, and creates standard Kubernetes `Secrets` for your applications to consume.
 
-If a password rotates in Vault, ESO automatically detects the change within 60 seconds and instantly updates the Kubernetes Secret. My Git repository is now completely clean of encrypted data!
+If a password rotates in Vault, ESO automatically detects the change within 60 seconds and instantly updates the Kubernetes Secret.
 
 ---
 
@@ -69,9 +69,9 @@ Migrations never go perfectly.
 
 After successfully migrating my apps to utilize Vault, I went through the repository and thoroughly purged all the old `.sops.yaml` files and my local `age.agekey` to enforce the new system. 
 
-About ten minutes later, I realized I had accidentally overridden a critical gateway token for one of my AI applications (`openclaw`) with a placeholder string during the Vault insertion process! Because I wiped my local Age key and the local SOPS files, the original token was seemingly gone forever.
+About ten minutes later, I realized I had accidentally overridden a critical gateway token for one of my AI applications (`openclaw`) with a placeholder string during the Vault insertion process. Because I wiped my local Age key and the local SOPS files, the original token was seemingly gone forever.
 
-I essentially locked myself out of my own application. However, I realized the old data still existed—it was just buried in the Git history, encrypted by a key I supposedly threw away.
+I essentially locked myself out of my own application. However, I realized the old data was just buried in the Git history, encrypted by a key I supposedly threw away.
 
 ### Executing the Recovery
 Here is exactly how I broke back into my own encrypted history:
@@ -85,7 +85,7 @@ git show <commit-hash>:apps/base/openclaw/secret.yaml > /tmp/old_sops.yaml
 ```
 
 **2. Hunting for the Master Key**
-I had deleted my *local* `age.agekey`, but I remembered how Flux works: for Flux to have functioned yesterday, it required a copy of that master key to live inside the cluster's `flux-system` namespace. Since I hadn't explicitly deleted the Kubernetes namespace resources yet, the master key was still sitting there!
+I had deleted my *local* `age.agekey`, but I remembered how Flux works: for Flux to have functioned yesterday, it required a copy of that master key to live inside the cluster's `flux-system` namespace. Since I hadn't explicitly deleted the Kubernetes namespace resources yet, the master key was still sitting there.
 
 ```bash
 kubectl get secret sops-age -n flux-system -o jsonpath='{.data.age\.agekey}' | base64 -d > /tmp/age.agekey
@@ -96,7 +96,7 @@ With the historical encrypted payload and the active master key securely piped t
 ```bash
 SOPS_AGE_KEY_FILE=/tmp/age.agekey sops -d /tmp/old_sops.yaml
 ```
-The terminal instantly spit out the raw, unencrypted Kubernetes YAML, allowing me to copy the lost API token and inject it straight into the new Vault cluster!
+The terminal instantly spit out the raw, unencrypted Kubernetes YAML, allowing me to copy the lost API token and inject it straight into the new Vault cluster.
 
 ---
 
@@ -107,16 +107,16 @@ This "heist" was a fun homelab rescue, but it highlights a massive, often-ignore
 When companies migrate away from legacy encryption systems (like SOPS or old AWS KMS keys) to a centralized Vault, they often focus solely on the *new* system. They delete the old encrypted files from the `main` branch and call the migration complete.
 
 **The Risk:** 
-As I demonstrated, Git never forgets. Your old encrypted secrets live forever in your commit history. If an infrastructure engineer forgets to aggressively revoke and destroy the *actual decryption keys* (in this case, leaving the `sops-age` secret active in the cluster), any malicious actor who gains read-only access to the Git repository and the cluster can effortlessly travel back in time, extract the old payloads, and decrypt them using the forgotten keys.
+As I demonstrated, Git never forgets. Your old encrypted secret files live forever in your commit history. The immediate danger here isn't necessarily that the old passwords exist in Git, but rather that the *legacy decryption keys* were left actively sitting inside the Kubernetes cluster.
 
-If those historical passwords haven't been actively rotated at the source (e.g., the actual database or API provider), your system is completely compromised despite your shiny new Vault architecture.
+If an infrastructure engineer completes a migration to Vault but forgets to completely delete the old `sops-age` master keys from the cluster, they leave a backdoor wide open. Any malicious actor who gains basic read-access to the Git repository and the cluster can effortlessly travel back in time, extract the old payloads, and decrypt them using that forgotten key.
 
-When you migrate secret systems, you **must** rotate every single underlying credential. Because if you can execute a heist against your own Git history, so can an attacker.
+When you migrate secret management systems, you **must** diligently track down and destroy every single token and credential tied to the old system's infrastructure. Because if you can execute a heist against your own Git history using a leftover key, so can an attacker.
 
 ---
 
 ## Wrap Up
 
-Migrating to HashiCorp Vault was easily the most significant security upgrade I've made to the homelab yet.
+Moving away from SOPS and local Age keys to Vault feels like a much more solid foundation for the cluster.
 
-Moving to a purely declarative `ExternalSecret` system means I no longer have to worry about managing complex encryption keys locally. I can inject secrets instantly, rotate them seamlessly, and rely on Kubernetes to automatically heal application states.
+The combination of Vault and the External Secrets Operator takes the local encryption overhead out of the equation. Now, I just drop a pointer in Git, put the actual token into Vault, and let Kubernetes handle the rest. It's clean, declarative, and keeps the Git history completely free of encrypted blobs.
