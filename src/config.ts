@@ -145,6 +145,12 @@ export const SOCIALS: SocialObjects = [
     active: false,
   },
   {
+    name: "CV",
+    href: "/Joe_CV.pdf",
+    linkTitle: `Download ${SITE.title}'s CV`,
+    active: true,
+  },
+  {
     name: "RSS",
     href: "/rss.xml",
     linkTitle: `${SITE.title}'s RSS Feed`,
