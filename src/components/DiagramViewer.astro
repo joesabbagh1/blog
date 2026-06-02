@@ -1,0 +1,418 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+const { src, alt, caption } = Astro.props;
+const id = `lightbox-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<figure class="diagram-figure" data-lightbox={id}>
+  <img src={src} alt={alt} class="diagram-img" />
+  <button class="diagram-expand-btn" aria-label="View fullscreen">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <polyline points="9 21 3 21 3 15"></polyline>
+      <line x1="21" y1="3" x2="14" y2="10"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+    Expand
+  </button>
+  {caption && <figcaption class="diagram-caption">{caption}</figcaption>}
+</figure>
+
+<div id={id} class="diagram-lightbox" role="dialog" aria-modal="true">
+  <!-- Top bar -->
+  <div class="diagram-toolbar">
+    <div class="diagram-zoom-controls">
+      <button class="diagram-tool-btn diagram-zoom-out" aria-label="Zoom out" title="Zoom out (scroll down)">−</button>
+      <span class="diagram-zoom-label">100%</span>
+      <button class="diagram-tool-btn diagram-zoom-in" aria-label="Zoom in" title="Zoom in (scroll up)">+</button>
+      <button class="diagram-tool-btn diagram-zoom-reset" aria-label="Reset zoom" title="Reset zoom (double-click image)" style="font-size:11px;letter-spacing:-0.03em;">1:1</button>
+    </div>
+    <button class="diagram-close-btn" aria-label="Close fullscreen">✕ Close</button>
+  </div>
+
+  <!-- Zoomable canvas -->
+  <div class="diagram-canvas">
+    <img src={src} alt={alt} class="diagram-lightbox-img" draggable="false" />
+  </div>
+
+  <!-- Hint -->
+  <p class="diagram-hint">Scroll to zoom · Drag to pan · Double-click to reset</p>
+  {caption && <p class="diagram-lightbox-caption">{caption}</p>}
+</div>
+
+<style>
+  /* ── Thumbnail ─────────────────────────────────────────── */
+  .diagram-figure {
+    margin: 1.5rem 0;
+    position: relative;
+    cursor: zoom-in;
+  }
+
+  .diagram-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    transition: opacity 0.2s;
+  }
+
+  .diagram-figure:hover .diagram-img {
+    opacity: 0.88;
+  }
+
+  .diagram-expand-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: inherit;
+  }
+
+  .diagram-caption {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+
+  /* ── Lightbox shell ────────────────────────────────────── */
+  .diagram-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .diagram-lightbox.is-open {
+    display: flex;
+  }
+
+  /* ── Toolbar ───────────────────────────────────────────── */
+  .diagram-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    gap: 12px;
+  }
+
+  .diagram-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .diagram-tool-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.85);
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  .diagram-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+  }
+
+  .diagram-zoom-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-family: ui-monospace, monospace;
+    min-width: 42px;
+    text-align: center;
+    user-select: none;
+    letter-spacing: 0.02em;
+  }
+
+  .diagram-close-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0 14px;
+    height: 32px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .diagram-close-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+  }
+
+  /* ── Zoomable canvas ───────────────────────────────────── */
+  .diagram-canvas {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .diagram-lightbox-img {
+    max-width: 95%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.6);
+    display: block;
+    transform-origin: center center;
+    /* transition added via JS only during button clicks, not drag */
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* ── Bottom hints ──────────────────────────────────────── */
+  .diagram-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.28);
+    padding: 6px 16px;
+    flex-shrink: 0;
+    font-family: inherit;
+    user-select: none;
+  }
+
+  .diagram-lightbox-caption {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.82rem;
+    text-align: center;
+    padding: 0 16px 10px;
+    font-style: italic;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+</style>
+
+<script>
+  function initDiagramViewers() {
+    document.querySelectorAll<HTMLElement>(".diagram-figure").forEach(figure => {
+      const id = figure.getAttribute("data-lightbox");
+      if (!id) return;
+
+      const lightbox = document.getElementById(id);
+      if (!lightbox) return;
+
+      const img = lightbox.querySelector<HTMLImageElement>(".diagram-lightbox-img")!;
+      const canvas = lightbox.querySelector<HTMLElement>(".diagram-canvas")!;
+      const closeBtn = lightbox.querySelector<HTMLElement>(".diagram-close-btn")!;
+      const zoomInBtn = lightbox.querySelector<HTMLElement>(".diagram-zoom-in")!;
+      const zoomOutBtn = lightbox.querySelector<HTMLElement>(".diagram-zoom-out")!;
+      const resetBtn = lightbox.querySelector<HTMLElement>(".diagram-zoom-reset")!;
+      const zoomLabel = lightbox.querySelector<HTMLElement>(".diagram-zoom-label")!;
+
+      // ── State ────────────────────────────────────────────
+      let scale = 1;
+      let tx = 0; // translate X
+      let ty = 0; // translate Y
+      let isDragging = false;
+      let didDrag = false;
+      let dragStartX = 0;
+      let dragStartY = 0;
+
+      // ── Helpers ──────────────────────────────────────────
+      const MIN_SCALE = 0.5;
+      const MAX_SCALE = 8;
+      const STEP = 1.3;
+
+      function applyTransform(animated = false) {
+        img.style.transition = animated ? "transform 0.18s ease" : "none";
+        img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+        img.style.cursor = scale > 1 ? "grab" : "default";
+        zoomLabel.textContent = `${Math.round(scale * 100)}%`;
+      }
+
+      function clampTranslation() {
+        // When zoomed in, allow panning within scaled bounds; when at or below 1× center.
+        if (scale <= 1) {
+          tx = 0;
+          ty = 0;
+        }
+      }
+
+      function resetZoom(animated = true) {
+        scale = 1;
+        tx = 0;
+        ty = 0;
+        applyTransform(animated);
+      }
+
+      function zoomBy(factor: number, animated = true) {
+        const next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * factor));
+        // Keep translation proportional so the center stays centred
+        const ratio = next / scale;
+        tx *= ratio;
+        ty *= ratio;
+        scale = next;
+        clampTranslation();
+        applyTransform(animated);
+      }
+
+      // ── Open / close ─────────────────────────────────────
+      const open = () => {
+        lightbox.classList.add("is-open");
+        document.body.style.overflow = "hidden";
+        resetZoom(false);
+      };
+
+      const close = () => {
+        lightbox.classList.remove("is-open");
+        document.body.style.overflow = "";
+      };
+
+      figure.addEventListener("click", open);
+
+      closeBtn.addEventListener("click", e => { e.stopPropagation(); close(); });
+
+      // Click backdrop (not canvas content) → close
+      // Guard: ignore the click that fires at the end of a drag-release
+      lightbox.addEventListener("click", e => {
+        if (didDrag) { didDrag = false; return; }
+        if (e.target === lightbox) close();
+      });
+
+      // ── Zoom buttons ─────────────────────────────────────
+      zoomInBtn.addEventListener("click", e => { e.stopPropagation(); zoomBy(STEP); });
+      zoomOutBtn.addEventListener("click", e => { e.stopPropagation(); zoomBy(1 / STEP); });
+      resetBtn.addEventListener("click", e => { e.stopPropagation(); resetZoom(); });
+
+      // ── Mouse wheel zoom ─────────────────────────────────
+      canvas.addEventListener("wheel", e => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.05 : 1 / 1.05;
+        zoomBy(factor, false);
+      }, { passive: false });
+
+      // ── Double-click to reset ─────────────────────────────
+      img.addEventListener("dblclick", e => {
+        e.stopPropagation();
+        resetZoom();
+      });
+
+      // ── Drag to pan ───────────────────────────────────────
+      img.addEventListener("mousedown", e => {
+        if (scale <= 1) return;
+        isDragging = true;
+        didDrag = false;
+        dragStartX = e.clientX - tx;
+        dragStartY = e.clientY - ty;
+        img.style.cursor = "grabbing";
+        img.style.transition = "none";
+        e.preventDefault();
+      });
+
+      document.addEventListener("mousemove", e => {
+        if (!isDragging) return;
+        didDrag = true;
+        tx = e.clientX - dragStartX;
+        ty = e.clientY - dragStartY;
+        img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (!isDragging) return;
+        isDragging = false;
+        img.style.cursor = scale > 1 ? "grab" : "default";
+        // didDrag stays true until the click event is handled above
+      });
+
+      // ── Pinch to zoom (touch) ─────────────────────────────
+      let lastPinchDist = 0;
+
+      canvas.addEventListener("touchstart", e => {
+        if (e.touches.length === 2) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          lastPinchDist = Math.hypot(dx, dy);
+        }
+      }, { passive: true });
+
+      canvas.addEventListener("touchmove", e => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const dist = Math.hypot(dx, dy);
+          if (lastPinchDist > 0) {
+            zoomBy(dist / lastPinchDist, false);
+          }
+          lastPinchDist = dist;
+        }
+      }, { passive: false });
+
+      canvas.addEventListener("touchend", () => { lastPinchDist = 0; });
+    });
+
+    // ── Global ESC ────────────────────────────────────────
+    if (!(document as any).__diagramKeyListenerAttached) {
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape") {
+          document.querySelectorAll<HTMLElement>(".diagram-lightbox.is-open").forEach(lb => {
+            lb.classList.remove("is-open");
+            document.body.style.overflow = "";
+          });
+        }
+        // + / - keyboard zoom
+        const lb = document.querySelector<HTMLElement>(".diagram-lightbox.is-open");
+        if (!lb) return;
+        if (e.key === "+" || e.key === "=") {
+          lb.querySelector<HTMLElement>(".diagram-zoom-in")?.click();
+        } else if (e.key === "-") {
+          lb.querySelector<HTMLElement>(".diagram-zoom-out")?.click();
+        } else if (e.key === "0") {
+          lb.querySelector<HTMLElement>(".diagram-zoom-reset")?.click();
+        }
+      });
+      (document as any).__diagramKeyListenerAttached = true;
+    }
+  }
+
+  initDiagramViewers();
+  document.addEventListener("astro:after-swap", initDiagramViewers);
+</script>
