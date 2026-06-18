@@ -55,6 +55,19 @@ const structuredData = {
   class={`${scrollSmooth && "scroll-smooth"}`}
 >
   <head>
+    <script is:inline>
+      (function () {
+        const primaryColorScheme = "";
+        const currentTheme = localStorage.getItem("theme");
+        const theme =
+          currentTheme ||
+          primaryColorScheme ||
+          (window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

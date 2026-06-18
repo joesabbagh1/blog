@@ -49,18 +49,23 @@ function reflectPreference() {
 // set early so no page flashes / CSS is made aware
 reflectPreference();
 
+// Apply theme to incoming page before swap to avoid flash during view transitions
+document.addEventListener("astro:before-swap", event => {
+  event.newDocument.documentElement.setAttribute("data-theme", themeValue);
+});
+
+function setThemeFeature() {
+  // set on load so screen readers can get the latest value on the button
+  reflectPreference();
+
+  // now this script can find and listen for clicks on the control
+  document.querySelector("#theme-btn")?.addEventListener("click", () => {
+    themeValue = themeValue === "light" ? "dark" : "light";
+    setPreference();
+  });
+}
+
 window.onload = () => {
-  function setThemeFeature() {
-    // set on load so screen readers can get the latest value on the button
-    reflectPreference();
-
-    // now this script can find and listen for clicks on the control
-    document.querySelector("#theme-btn")?.addEventListener("click", () => {
-      themeValue = themeValue === "light" ? "dark" : "light";
-      setPreference();
-    });
-  }
-
   setThemeFeature();
 
   // Runs on view transitions navigation
