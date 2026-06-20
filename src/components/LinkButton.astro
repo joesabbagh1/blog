@@ -5,6 +5,8 @@ export interface Props {
   ariaLabel?: string;
   title?: string;
   disabled?: boolean;
+  target?: string;
+  rel?: string;
 }
 
 const {
@@ -13,6 +15,8 @@ const {
   ariaLabel,
   title,
   disabled = false,
+  target,
+  rel,
 } = Astro.props;
 
 const isExternal =
@@ -36,9 +40,8 @@ const isExternal =
       class:list={["group inline-block hover:text-skin-accent", className]}
       aria-label={ariaLabel}
       title={title}
-      {...(isExternal
-        ? { target: "_blank", rel: "noopener noreferrer" }
-        : {})}
+      target={target || (isExternal ? "_blank" : undefined)}
+      rel={rel || (isExternal ? "noopener noreferrer" : undefined)}
     >
       <slot />
     </a>
