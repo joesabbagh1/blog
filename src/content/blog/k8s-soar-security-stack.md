@@ -17,9 +17,9 @@ description: How I built k8s-soar, a layered Kubernetes security stack with Falc
 
 <base target="_blank">
 
-In my [previous homelab posts](https://blog.joesabbagh.com/posts/homelab-upgrade/), I focused on getting a real three-node cluster running: Cilium networking, Traefik ingress, Flux GitOps, Vault for secrets, and a pile of self-hosted apps. The infrastructure side was solid. The security side was not.
+In my [previous homelab posts](https://blog.joesabbagh.com/posts/homelab-upgrade/), I focused on getting a real three-node cluster running: Cilium networking, Traefik ingress, Flux GitOps, Vault for secrets, and a pile of self-hosted apps. I also had a proper observability stack — Grafana with Prometheus for metrics and Loki for logs. The infrastructure side was solid. The security side was not.
 
-I had TLS, a subnet router, and a secrets vault, but nothing watching what was actually happening inside my pods. No runtime detection. No admission policies. No automated response when something looked wrong. If a compromised container started spawning shells or phoning home, I would only find out if I happened to be staring at `kubectl logs` at the right moment.
+I had TLS, a subnet router, and a secrets vault, but nothing watching for suspicious behaviour inside my pods. Prometheus could tell me a pod was up; Loki gave me application logs when I went looking. Neither would catch a reverse shell or an unexpected outbound connection. No runtime detection. No admission policies. No automated response when something looked wrong. If a compromised container started spawning shells or phoning home, I would only find out if I happened to be staring at a Grafana dashboard at the right moment.
 
 That gap is what **k8s-soar** is built to close. The name stands for **Kubernetes Security Orchestration, Automation & Response**. It is an open-source project I built to provision a complete detect-and-respond security stack on bare-metal Kubernetes, and the plan is to bring it onto my production homelab cluster next.
 
@@ -112,7 +112,7 @@ This is deliberately lab-first. The `security-lab` namespace runs a minimal vict
 
 ## How It Will Be Applied on My Cluster
 
-My homelab cluster already runs several pieces of this stack. The [homelab repo](https://github.com/joesabbagh1/homelab) manages everything through Flux GitOps on three HP EliteDesk nodes at `192.168.0.10`–`.12`. Cilium 1.19 is already the CNI. Grafana and Prometheus are in the `monitoring` namespace. Vault HA handles secrets via External Secrets Operator.
+My homelab cluster already runs several pieces of this stack. The [homelab repo](https://github.com/joesabbagh1/homelab) manages everything through Flux GitOps on three HP EliteDesk nodes at `192.168.0.10`–`.12`. Cilium 1.19 is already the CNI. Grafana, Prometheus, and Loki live in the `monitoring` namespace. Vault HA handles secrets via External Secrets Operator.
 
 What is missing is everything above the network layer: no Falco, no Tetragon, no Kyverno, no SOAR responder, no runtime visibility at all.
 
