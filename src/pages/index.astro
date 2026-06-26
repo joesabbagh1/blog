@@ -42,7 +42,12 @@ const socialCount = SOCIALS.filter(social => social.active).length;
       </a> -->
 
       <p>
-        <span data-i18n="heroText">Welcome to my blog, this is where I'm gonna talk mostly about my homelab and share what I do and what I learn. The homelab is built on Kubernetes, where I host various services and experiment with cloud-native tools.</span>
+        <span data-i18n="heroText"
+          >Welcome to my blog, this is where I'm gonna talk mostly about my
+          homelab and share what I do and what I learn. The homelab is built on
+          Kubernetes, where I host various services and experiment with
+          cloud-native tools.</span
+        >
         <br />
         <br />
         <span data-i18n="heroLine2">I'm</span>{" "}
@@ -50,9 +55,11 @@ const socialCount = SOCIALS.filter(social => social.active).length;
           className="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
           href="https://www.credly.com/users/joe-michel-sabbagh"
         >
-          <span data-i18n="heroCertified">6x AWS Certified</span>
+          <span data-i18n="heroCertified">7x AWS Certified</span>
         </LinkButton>
-        {" "}<span data-i18n="heroLine3">and currently doing a master's in cybersecurity at</span>{" "}
+        {" "}<span data-i18n="heroLine3"
+          >and currently doing a master's in cybersecurity at</span
+        >{" "}
         <LinkButton
           className="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
           href="https://www.epita.fr/"
@@ -65,7 +72,9 @@ const socialCount = SOCIALS.filter(social => social.active).length;
         // only display if at least one social link is enabled
         socialCount > 0 && (
           <div class="social-wrapper">
-            <div class="social-links" data-i18n="socialLinks">Social Links:</div>
+            <div class="social-links" data-i18n="socialLinks">
+              Social Links:
+            </div>
             <Socials />
           </div>
         )
