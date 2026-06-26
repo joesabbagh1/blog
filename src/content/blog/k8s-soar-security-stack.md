@@ -33,6 +33,20 @@ The project is split across two repositories:
 
 The architecture is built on a "Defense in Depth" model, recognizing that there is no single silver bullet in cybersecurity. Security must be enforced at every layer: at the admission controller, at the network boundary, and deep within the Linux kernel.
 
+### Architecture Overview
+
+<pre class="mermaid">
+flowchart TD
+    Attacker[Attacker] --> Kyverno(Kyverno Admission Control)
+    Kyverno -- Prevented --> Blocked[Deployment Blocked]
+    Kyverno -- Allowed/Runtime --> Runtime{eBPF Layer}
+    Runtime -->|Detect| Falco[Falco]
+    Runtime -->|Enforce| Tetragon[Tetragon]
+    Tetragon -->|Kernel| Sigkill[SIGKILL Process]
+    Falco -->|Alert| Shuffle[Shuffle SOAR]
+    Shuffle -->|Quarantine| Cilium[Cilium Network Policy]
+</pre>
+
 ### Prevention: Kyverno
 
 Before a workload even starts, **Kyverno** acts as the gatekeeper. It applies policy-as-code at the Kubernetes admission layer. Kyverno validates incoming manifests to ensure that no privileged containers are launched, sensitive hostPath mounts are blocked, and images are cryptographically signed. If an attacker compromises a CI/CD pipeline and attempts to deploy a malicious pod, Kyverno blocks the deployment before it ever reaches a node.
@@ -56,6 +70,20 @@ While Falco observes, **Tetragon** enforces. Built heavily on eBPF, Tetragon ope
 The true innovation of the architecture lies in the "R" (Response). Rather than relying on simple, hardcoded scripts that break at scale, the system is powered by **Shuffle**, an open-source, enterprise-grade SOAR platform. Shuffle acts as the "brain," evaluating complex, multi-stage attacks and executing generalized automated response workflows.
 
 ### Dynamic Automated Workflows
+
+<pre class="mermaid">
+flowchart LR
+    Falco[Falco Alert] -->|Webhook| Shuffle(Shuffle Playbook)
+    Shuffle --> Enrich{Enrichment}
+    Enrich -->|Logs| Loki[Loki]
+    Enrich -->|Metrics| Prom[Prometheus]
+    Enrich -->|Traces| Tetragon[Tetragon]
+    Shuffle --> Respond{Response}
+    Respond -->|Isolate| Cilium[Cilium]
+    Respond -->|Notify| Slack[Slack / Jira]
+    Respond -->|Annotate| Grafana[Grafana]
+</pre>
+
 
 Shuffle does not rely on a single, rigid response path; instead, it dynamically adapts its workflow based on the type of threat detected. Playbooks are designed to map specific attack scenarios to appropriate, proportionate responses ranging from simple alerting to aggressive cluster-wide cordoning.
 
