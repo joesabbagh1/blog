@@ -154,9 +154,12 @@ const structuredData = {
     <script is:inline src="/lang-toggle.js"></script>
 
     <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "05c71ec88fc046529e877ade146d4d9d"}'></script><!-- End Cloudflare Web Analytics -->
-  </head>
-  <body>
-    <slot />
+    <style is:global>
+      .mermaid svg {
+        max-width: 100%;
+        height: auto;
+      }
+    </style>
     <script type="module">
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
       
