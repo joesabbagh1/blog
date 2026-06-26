@@ -82,7 +82,7 @@ Examples of these scenarios include:
 
 To guarantee that new policies, rule updates, or infrastructure changes do not degrade our security posture, the [**k8s-soar-scenarios**](https://github.com/joesabbagh1/k8s-soar-scenarios) repository serves as an automated validation framework. 
 
-This is where my **Homelab** comes into play as a continuous execution environment. The scenarios repository features a robust GitHub Actions CI/CD pipeline. Every time a new scenario is added or an existing one is edited, the pipeline connects to the physical homelab cluster and systematically detonates the attack scenarios. 
+This is where my **Homelab** comes into play as a continuous execution environment. The scenarios repository features a GitHub Actions CI/CD pipeline (which is currently a work in progress). The goal is that every time a new scenario is added or an existing one is edited, the pipeline will connect to the physical homelab cluster and systematically detonate the attack scenarios. 
 
 The pipeline acts as an automated red team, verifying the entire defense chain: Did Kyverno attempt to block it? Did Falco and Tetragon detect the runtime anomalies? Did Shuffle generate the forensic report and successfully isolate the threat? 
 
