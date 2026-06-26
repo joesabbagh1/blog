@@ -72,13 +72,15 @@ Shuffle does not rely on a single, rigid response path; instead, it dynamically 
 
 As an example, when a sophisticated **Reverse Shell (T1059 / T1090)** scenario unfolds, the system executes the following comprehensive workflow:
 
-1. **Triggering the Playbook:** Falco detects the anomalous shell activity and sends the JSON payload to `falcosidekick`, which immediately POSTs the alert to a Shuffle Webhook.
-2. **Deep Enrichment:** Shuffle doesn't just blindly kill the pod. It begins building a forensic context. It queries **Loki** to extract the last 15 minutes of application logs from the compromised pod, queries **Prometheus** for resource spikes, and pulls execution traces from **Tetragon** to understand what the attacker touched before the alert fired.
+1. **Triggering the Playbook:** Falco detects the anomalous shell activity (or Tetragon terminates a malicious process, or Kyverno blocks a deployment) and sends the JSON payload to a Shuffle Webhook.
+2. **Deep Enrichment:** Shuffle doesn't just blindly react. It begins building a forensic context. It queries **Loki** to extract the last 15 minutes of application logs from the compromised pod, queries **Prometheus** for resource spikes, and pulls execution traces from **Tetragon** to understand what the attacker touched before the alert fired.
 3. **Forensic Reporting:** Shuffle compiles this enriched data into a comprehensive forensic report (detailing the MITRE ATT&CK vectors, the associated IP addresses checked against Threat Intelligence APIs, and the application logs). This report is automatically sent to the SOC team via Slack and attached to a newly created incident ticket (e.g., Jira or TheHive).
 4. **Active Response:** Concurrently, Shuffle makes an API call to the Kubernetes control plane to patch the compromised pod with a quarantine label.
 5. **Isolation:** Cilium instantly recognizes the label and drops all ingress and egress traffic for that pod, containing the blast radius while keeping the pod alive for further memory forensics.
 
 While the Reverse Shell scenario triggers network isolation and full forensic reporting, other scenarios dictate entirely different playbooks. For instance, a crypto-miner detection might trigger an immediate process termination without a full network quarantine, whereas a lateral movement attempt might result in cordoning the entire node and draining its workloads to protect the control plane.
+
+Crucially, this orchestration extends beyond just detection. When **Kyverno** blocks a malicious deployment at the admission layer, or when **Tetragon** instantly terminates a rogue process in the kernel, they also send webhook payloads to Shuffle. Shuffle acts as the central intelligence hub, enriching these prevention and enforcement events and generating automated incident tickets. This ensures the SOC is fully aware that an attack was successfully mitigated, rather than these critical events disappearing into siloed logs.
 
 ### Complete Traceability
 
