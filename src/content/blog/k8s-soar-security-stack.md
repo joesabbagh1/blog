@@ -35,6 +35,8 @@ The architecture is built on a "Defense in Depth" model, recognizing that there 
 
 ### Architecture Overview
 
+![Defense in Depth Architecture](../../assets/diagram-architecture.svg)
+
 
 
 ### Prevention: Kyverno
@@ -60,6 +62,8 @@ While Falco observes, **Tetragon** enforces. Built heavily on eBPF, Tetragon ope
 The true innovation of the architecture lies in the "R" (Response). Rather than relying on simple, hardcoded scripts that break at scale, the system is powered by **Shuffle**, an open-source, enterprise-grade SOAR platform. Shuffle acts as the "brain," evaluating complex, multi-stage attacks and executing generalized automated response workflows.
 
 ### Dynamic Automated Workflows
+
+![SOAR Dynamic Workflows](../../assets/diagram-soar.svg)
 
 
 
