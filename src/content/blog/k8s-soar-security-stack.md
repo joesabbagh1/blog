@@ -1,221 +1,97 @@
 ---
 author: Joe Sabbagh
-pubDatetime: 2026-06-15
-title: "k8s-soar: Building a Detect-and-Respond Security Stack for My Homelab Cluster"
+pubDatetime: 2026-06-26
+title: "k8s-soar: Building an Enterprise-Grade Kubernetes SOAR Fortress (Master's Thesis)"
 featured: true
 tags:
-  - homelab
   - kubernetes
   - security
+  - SOAR
   - falco
   - tetragon
   - kyverno
-  - cilium
   - eBPF
-description: How I built k8s-soar, a layered Kubernetes security stack with Falco, Tetragon, Kyverno, and an automated quarantine responder, and how I plan to deploy it on my three-node homelab cluster.
+description: For my Master's Thesis, I built k8s-soar, a comprehensive Security Orchestration, Automation, and Response (SOAR) architecture for Kubernetes leveraging eBPF, Shuffle, and bidirectional observability.
 ---
 
 <base target="_blank">
 
-In my [previous homelab posts](https://blog.joesabbagh.com/posts/homelab-upgrade/), I focused on getting a real three-node cluster running: Cilium networking, Traefik ingress, Flux GitOps, Vault for secrets, and a pile of self-hosted apps. I also had a proper observability stack — Grafana with Prometheus for metrics and Loki for logs. The infrastructure side was solid. The security side was not.
+For my Master's Thesis, I set out to solve a fundamental problem in cloud-native security: **if an attacker breaches a Kubernetes cluster, how does the infrastructure respond?** 
 
-I had TLS, a subnet router, and a secrets vault, but nothing watching for suspicious behaviour inside my pods. Prometheus could tell me a pod was up; Loki gave me application logs when I went looking. Neither would catch a reverse shell or an unexpected outbound connection. No runtime detection. No admission policies. No automated response when something looked wrong. If a compromised container started spawning shells or phoning home, I would only find out if I happened to be staring at a Grafana dashboard at the right moment.
+Most organizations deploy security tools in isolation. They might install Falco for detection, Kyverno for policy enforcement, and Prometheus for monitoring. However, these tools rarely communicate. When a critical security event occurs, it often generates an alert in a dashboard, waiting for a human operator to notice, investigate, and manually intervene. In the world of automated cloud infrastructure, human reaction time is too slow to stop lateral movement or data exfiltration.
 
-That gap is what **k8s-soar** is built to close. The name stands for **Kubernetes Security Orchestration, Automation & Response**. It is an open-source project I built to provision a complete detect-and-respond security stack on bare-metal Kubernetes, and the plan is to bring it onto my production homelab cluster next.
+To bridge this gap, I designed and developed **k8s-soar**, a complete Kubernetes Security Orchestration, Automation, and Response (SOAR) architecture. It wires together best-in-class security tools using eBPF, deeply integrates them with an enterprise-grade observability stack, and closes the loop with automated, active incident response.
 
-All the code lives in the [k8s-soar repo](https://github.com/joesabbagh1/k8s-soar) on GitHub.
-
----
-
-## The Problem: Security Tools in Isolation
-
-Most Kubernetes security guides treat each tool as a standalone install. Install Falco here. Add Kyverno there. Maybe throw in a NetworkPolicy or two. What you end up with is a collection of components that do not talk to each other.
-
-That is fine for ticking boxes on a compliance checklist. It is not fine when you actually want to know whether detection triggers a meaningful response.
-
-I wanted to answer a specific question: **if an attacker gets a shell inside a container, what happens next?** Not in theory, but in my cluster, with real alerts, real policies, and real isolation.
-
-k8s-soar is the answer to that question. It wires together four security layers into a single install path, validates them against eight MITRE ATT&CK–mapped attack scenarios, and closes the loop with an automated **Detect → Isolate** workflow.
+The project is split across two repositories:
+- [**k8s-soar**](https://github.com/joesabbagh1/k8s-soar): The core infrastructure, bringing together the detection, enforcement, and orchestration engines into a unified deployment.
+- [**k8s-soar-scenarios**](https://github.com/joesabbagh1/k8s-soar-scenarios): A dedicated Threat Simulation and Validation framework used to continuously pressure-test the architecture against complex attack vectors.
 
 ---
 
-## What I Built
+## The Security Architecture: Defense in Depth
 
-k8s-soar is a Helm umbrella chart plus Ansible bootstrap that installs a full security stack from scratch on bare-metal Linux. The stack has four distinct phases:
+The architecture is built on a "Defense in Depth" model, recognizing that there is no single silver bullet in cybersecurity. Security must be enforced at every layer: at the admission controller, at the network boundary, and deep within the Linux kernel.
 
-| Phase | Component | What it does |
-| ----- | --------- | ------------ |
-| **Prevent** | Kyverno | Blocks bad pods at admission time: privileged containers, hostPath mounts, `:latest` tags |
-| **Detect** | Falco | Watches syscalls via modern eBPF and fires alerts on suspicious runtime behaviour |
-| **Enforce** | Tetragon | Applies kernel-level TracingPolicies that can kill processes or log network connections |
-| **Respond** | SOAR responder | Receives Falco alerts via webhook and quarantines the offending pod |
+### Prevention: Kyverno
+Before a workload even starts, **Kyverno** acts as the gatekeeper. It applies policy-as-code at the Kubernetes admission layer. Kyverno validates incoming manifests to ensure that no privileged containers are launched, sensitive hostPath mounts are blocked, and images are cryptographically signed. If an attacker compromises a CI/CD pipeline and attempts to deploy a malicious pod, Kyverno blocks the deployment before it ever reaches a node.
 
-Under the hood, the stack also includes **Cilium** as the eBPF CNI (with Hubble for flow observability) and a dedicated **`security-lab`** namespace where attack scenarios run in isolation from everything else.
+### Detection: Falco
+Once workloads are running, **Falco** acts as the cluster's surveillance camera. Utilizing modern eBPF probes, it monitors system calls in real-time. Falco does not block traffic. Instead, it provides high-fidelity, asynchronous detection of suspicious activities like unexpected binary execution, sensitive file reads, or abnormal namespace transitions. When a rule is triggered, Falco generates a detailed JSON alert containing full Kubernetes metadata.
 
-### The SOAR Workflow
+### Enforcement: Tetragon
+While Falco observes, **Tetragon** enforces. Built heavily on eBPF, Tetragon operates synchronously within the kernel datapath. This means Tetragon can evaluate an action and apply a `SIGKILL` to a malicious process before the action completes in user space. Whether an attacker tries to overwrite `/etc/shadow` or establish a covert network connection, Tetragon's TracingPolicies can instantly sever the process at the kernel level, acting as a highly precise scalpel.
 
-The "R" in SOAR is not a Splunk integration or a PagerDuty runbook. It is a lightweight Python webhook responder running inside the cluster. The flow looks like this:
-
-```text
-Falco detects suspicious activity
-        │
-        ▼
-falcosidekick receives the JSON alert
-        │
-        ▼
-POST to k8s-soar-responder:8080/webhook
-        │
-        ▼
-Responder patches the pod with label security.quarantine=true
-        │
-        ▼
-CiliumNetworkPolicy denies all ingress and egress
-```
-
-The entire loop, from syscall to network isolation, completes in seconds. No human in the loop required.
-
-The responder itself is roughly 130 lines of Python. It parses Falco alert metadata to identify the namespace and pod name, patches the pod label, and lets Cilium's quarantine policy do the rest. Simple, auditable, and entirely in-cluster.
-
-### Custom Detection Rules
-
-Falco ships with a solid default ruleset, but I wrote custom rules scoped to the `security-lab` namespace to keep noise down on a real cluster. The four custom rules cover:
-
-- **Shell spawned inside a container**: detects `bash`/`sh` execution in the lab victim pod
-- **Sensitive credential access**: reads of service account tokens or `/etc/shadow`
-- **Reverse shell outbound**: outbound connections combined with shell processes
-- **Crypto miner processes**: matches known miner binaries like `xmrig` and `minerd`
-
-Kyverno policies and Tetragon TracingPolicies follow the same pattern: scoped, named, and mapped to specific attack scenarios.
+### Networking: Cilium
+**Cilium** provides the underlying eBPF-based container networking. Beyond its performance benefits, Cilium enables deep L3-L7 network policies. In the context of k8s-soar, Cilium is the muscle behind our network quarantines, enforcing default-deny postures and instantly isolating compromised endpoints without disrupting the rest of the cluster.
 
 ---
 
-## What It Defends Against
+## The SOAR Engine: Shuffle & Bidirectional Observability
 
-Every scenario in k8s-soar is mapped to the [MITRE ATT&CK for Containers](https://attack.mitre.org/matrices/enterprise/containers/) framework. There are eight core scenarios:
+The true innovation of the architecture lies in the "R" (Response). Rather than relying on simple, hardcoded scripts that break at scale, the system is powered by **Shuffle**, an open-source, enterprise-grade SOAR platform. Shuffle acts as the "brain," evaluating complex, multi-stage attacks and executing generalized automated response workflows.
 
-| Scenario | Threat | MITRE Technique | Primary Defense |
-| -------- | ------ | --------------- | --------------- |
-| Shell in container | Attacker execs into a running pod | T1059 Execution | Falco detect → SOAR isolate |
-| Privileged pod / hostPath | Container escape to host | T1611 Escape to Host | Kyverno block at admission |
-| SA token theft | Reading mounted service account credentials | T1552 Credential Access | Kyverno audit + Falco detect |
-| Reverse shell | Outbound callback to attacker C2 | T1059 Execution | Falco detect + Tetragon observe |
-| Crypto miner | Resource hijacking for cryptocurrency | T1496 Resource Hijacking | Falco detect → SOAR isolate |
-| Missing security context | Pods running as root with `:latest` tags | Best practice | Kyverno audit |
-| Lateral movement | Pod-to-pod communication inside the cluster | T1021 Lateral Movement | Default-deny NetworkPolicy + Hubble |
-| Sensitive host path write | Writing to `/etc/shadow` or `/root/` | T1611 Escape to Host | Kyverno block + Tetragon Sigkill |
+### Dynamic Automated Workflows
 
-Each scenario has a runbook (`scenarios/NN-name/run.sh`) and expected evidence documented in a README. You trigger the attack manually, then verify that the right tool fired at the right layer.
+Shuffle does not rely on a single, rigid response path; instead, it dynamically adapts its workflow based on the type of threat detected. Playbooks are designed to map specific attack scenarios to appropriate, proportionate responses ranging from simple alerting to aggressive cluster-wide cordoning.
 
-This is deliberately lab-first. The `security-lab` namespace runs a minimal victim workload behind default-deny network policies. Attack simulations never touch your real apps.
+As an example, when a sophisticated **Reverse Shell (T1059 / T1090)** scenario unfolds, the system executes the following comprehensive workflow:
 
----
+1. **Triggering the Playbook:** Falco detects the anomalous shell activity and sends the JSON payload to `falcosidekick`, which immediately POSTs the alert to a Shuffle Webhook.
+2. **Deep Enrichment:** Shuffle doesn't just blindly kill the pod. It begins building a forensic context. It queries **Loki** to extract the last 15 minutes of application logs from the compromised pod, queries **Prometheus** for resource spikes, and pulls execution traces from **Tetragon** to understand what the attacker touched before the alert fired.
+3. **Forensic Reporting:** Shuffle compiles this enriched data into a comprehensive forensic report (detailing the MITRE ATT&CK vectors, the associated IP addresses checked against Threat Intelligence APIs, and the application logs). This report is automatically sent to the SOC team via Slack and attached to a newly created incident ticket (e.g., Jira or TheHive).
+4. **Active Response:** Concurrently, Shuffle makes an API call to the Kubernetes control plane to patch the compromised pod with a quarantine label.
+5. **Isolation:** Cilium instantly recognizes the label and drops all ingress and egress traffic for that pod, containing the blast radius while keeping the pod alive for further memory forensics.
 
-## How It Will Be Applied on My Cluster
+While the Reverse Shell scenario triggers network isolation and full forensic reporting, other scenarios dictate entirely different playbooks. For instance, a crypto-miner detection might trigger an immediate process termination without a full network quarantine, whereas a lateral movement attempt might result in cordoning the entire node and draining its workloads to protect the control plane.
 
-My homelab cluster already runs several pieces of this stack. The [homelab repo](https://github.com/joesabbagh1/homelab) manages everything through Flux GitOps on three HP EliteDesk nodes at `192.168.0.10`–`.12`. Cilium 1.19 is already the CNI. Grafana, Prometheus, and Loki live in the `monitoring` namespace. Vault HA handles secrets via External Secrets Operator.
-
-What is missing is everything above the network layer: no Falco, no Tetragon, no Kyverno, no SOAR responder, no runtime visibility at all.
-
-The deployment plan breaks into four phases.
-
-### Phase 1: Add the Security Stack via Flux
-
-Since Cilium is already running, the k8s-soar Helm install skips the CNI and deploys only the security components:
-
-- **Falco** + falcosidekick in the `falco` namespace
-- **Tetragon** TracingPolicies in `kube-system`
-- **Kyverno** admission policies in the `kyverno` namespace
-- **SOAR responder** in the `k8s-soar` namespace
-
-This means adding HelmRepository CRs for `falcosecurity` and `kyverno` to my Flux infrastructure layer, then creating HelmRelease manifests under `apps/base/`, the same pattern I already use for Vault, Traefik, and the media stack.
-
-Kyverno policies will ship in **Audit** mode first. I want to collect a baseline of what would have been blocked before flipping anything to Enforce. Blocking Jellyfin because it uses a `:latest` tag is not the goal.
-
-### Phase 2: Deploy the Security Lab
-
-The `security-lab` namespace gets its own Flux kustomization, sourced from the k8s-soar repo. It includes:
-
-- A minimal victim deployment (`busybox:1.36`, non-root, dropped capabilities)
-- Default-deny CiliumNetworkPolicies with explicit DNS egress only
-- The quarantine CNP that triggers when a pod gets labeled `security.quarantine=true`
-
-Falco custom rules are scoped exclusively to `security-lab`. Running attack scenarios against the lab will not generate alerts from my production workloads.
-
-### Phase 3: Wire Up the SOAR Pipeline
-
-falcosidekick is configured to POST alerts at WARNING priority or above to the in-cluster responder:
-
-```yaml
-# values.yaml (k8s-soar)
-falcosidekick:
-  config:
-    webhook:
-      address: "http://k8s-soar-responder.k8s-soar.svc.cluster.local:8080/webhook"
-      minimumpriority: "warning"
-```
-
-When a scenario triggers a Falco alert, the responder labels the pod and Cilium cuts its network access. No external orchestrator required, though I may later route alerts to Grafana dashboards and use Vault for webhook credentials.
-
-### Phase 4: Validate with Attack Scenarios
-
-Once the stack is live, I run the eight scenario scripts one at a time against `security-lab`:
-
-```bash
-./scenarios/01-shell-in-container/run.sh
-./scenarios/04-reverse-shell/run.sh
-# ... see scenarios/threat-matrix.md
-```
-
-Each run produces evidence I can capture with `scripts/capture-scenario-evidence.sh`: Falco alert logs, falcosidekick delivery confirmation, responder patch events, and the quarantine label on the target pod.
-
-Pass/fail against the threat matrix becomes the proof that the stack actually works, not just that it installed cleanly.
+### Complete Traceability
+Traceability in k8s-soar is designed for enterprise compliance. It is not just a log entry. When Shuffle orchestrates a response, it updates the incident ticket with the exact actions taken and pushes rich Annotations directly to the **Grafana** API. When SOC analysts view their dashboards, they see a vertical timeline marker indicating exactly when the breach occurred, when the forensic data was captured, and when the automated isolation took effect.
 
 ---
 
-## How This Improves Cluster Security
+## Threat Modeling and Continuous Validation
 
-Before k8s-soar, my homelab security posture looked like this:
+A security stack is only as reliable as its last test. To ensure the architecture can withstand real-world threats, I am continuously adding and refining complex attack scenarios mapped to the [MITRE ATT&CK for Containers](https://attack.mitre.org/matrices/enterprise/containers/) framework.
 
-- **Network boundary**: Tailscale subnet router, no public exposure, private DNS
-- **Secrets**: Vault HA with External Secrets Operator, no encrypted blobs in Git
-- **TLS**: cert-manager with Cloudflare DNS-01
-- **Runtime**: nothing
+Examples of these scenarios include:
+- **T1611 Escape to Host:** Exploiting overly permissive configurations to break out of the container namespace and access the underlying node.
+- **T1059 Execution / T1090 Proxy:** Establishing multi-stage reverse shells to exfiltrate data.
+- **T1496 Resource Hijacking:** Stealthy execution of crypto-miners disguised as legitimate background processes.
 
-That last line is the gap. A cluster can have perfect secrets management and locked-down ingress and still be wide open internally. A compromised pod could spawn shells, read mounted credentials, mine cryptocurrency, or pivot to other pods, and nothing would notice.
+### The CI/CD Validation Pipeline
 
-k8s-soar adds four concrete improvements:
+To guarantee that new policies, rule updates, or infrastructure changes do not degrade our security posture, the [**k8s-soar-scenarios**](https://github.com/joesabbagh1/k8s-soar-scenarios) repository serves as an automated validation framework. 
 
-**1. Prevention at the gate.** Kyverno blocks privileged containers, hostPath volumes, and root pods before they ever schedule. Bad configurations fail at admission, not after they are running.
+This is where my **Homelab** comes into play as a continuous execution environment. The scenarios repository features a robust GitHub Actions CI/CD pipeline. Every time a new scenario is added or an existing one is edited, the pipeline connects to the physical homelab cluster and systematically detonates the attack scenarios. 
 
-**2. Runtime visibility.** Falco watches every syscall in every container via eBPF. Shells, credential reads, outbound reverse shells, and miner processes all generate structured JSON alerts with Kubernetes metadata attached.
+The pipeline acts as an automated red team, verifying the entire defense chain: Did Kyverno attempt to block it? Did Falco and Tetragon detect the runtime anomalies? Did Shuffle generate the forensic report and successfully isolate the threat? 
 
-**3. Kernel-level enforcement.** Tetragon goes further than detection. It can Sigkill a process that tries to write to `/etc/shadow` or log outbound TCP connections from suspicious processes. Detection and enforcement are separate layers on purpose.
-
-**4. Automated containment.** The SOAR responder closes the loop. Detection without response is just logging. Labeling a pod `security.quarantine=true` and letting Cilium deny all traffic means a compromised workload is contained in seconds, without waiting for me to notice an alert in Grafana.
-
-Together, these layers turn the cluster from "secure at the perimeter" into "secure in depth", with a validated, reproducible threat matrix to prove it.
+If any stage of the Defense in Depth model fails to react correctly, the CI/CD pipeline turns red, ensuring that the architecture's Active Response capabilities are rigorously tested and verified against real infrastructure, every single time.
 
 ---
 
-## What Comes Next
+## Conclusion
 
-The k8s-soar repo is installable today on a fresh bare-metal cluster via a single `./ansible/setup.sh` command. The homelab integration (Flux HelmReleases, security-lab namespace, scenario validation on production hardware) is the next step.
+Building **k8s-soar** for my Master's Thesis demonstrated the value of evolving Kubernetes security beyond passive visibility. While dashboards and alerts remain essential for situational awareness, pairing them with automated orchestration allows the infrastructure to defend itself at machine speed, significantly reducing the window of exposure during a breach. 
 
-After baseline validation in Audit mode, the plan is to:
-
-1. Flip Kyverno policies to Enforce for cluster-wide hardening
-2. Extend quarantine CNPs beyond `security-lab` to cover production namespaces
-3. Route Falco alerts to Grafana dashboards for ongoing visibility
-4. Document results in the thesis threat matrix with captured evidence per scenario
-
-If you run a homelab or a small bare-metal Kubernetes cluster and want to go beyond "I installed Falco once", the full stack is wired together with attack scenarios to prove it works. The repo is open and the install path is documented.
-
----
-
-## Wrap Up
-
-Building k8s-soar started as a thesis project and turned into something I actually want running on my cluster. The stack is not exotic. Cilium, Falco, Tetragon, and Kyverno are all well-known tools. What is different is wiring them together into a single install, validating them against real attack scenarios, and closing the loop with automated quarantine.
-
-My homelab already has the networking and secrets foundation. k8s-soar adds the runtime security layer on top. Prevent bad pods. Detect suspicious behaviour. Enforce at the kernel. Respond automatically.
-
-That is the stack I wanted. Now it is time to deploy it.
+By unifying the preventative power of Kyverno, the deep kernel enforcement of eBPF via Falco and Tetragon, and the intelligent, automated orchestration of Shuffle, we can create a highly resilient, self-healing Kubernetes fortress. It doesn't just detect threats—it enriches, reports, and isolates them, transforming the cluster from a passive victim into an active defender.
