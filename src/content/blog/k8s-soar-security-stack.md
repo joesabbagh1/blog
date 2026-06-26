@@ -109,9 +109,11 @@ A security stack is only as reliable as its last test. To ensure the architectur
 
 Examples of these scenarios include:
 
-- **T1611 Escape to Host:** Exploiting overly permissive configurations to break out of the container namespace and access the underlying node.
-- **T1059 Execution / T1090 Proxy:** Establishing multi-stage reverse shells to exfiltrate data.
-- **T1496 Resource Hijacking:** Stealthy execution of crypto-miners disguised as legitimate background processes.
+| MITRE ID | Tactic | Technique | Description | Expected SOAR Response |
+| :--- | :--- | :--- | :--- | :--- |
+| **T1611** | Privilege Escalation | Escape to Host | Exploiting permissive configurations to break out of the container and access the underlying node. | Alert & Node Cordon |
+| **T1059 / T1090** | Execution / C2 | Reverse Shell | Establishing a multi-stage reverse shell to establish persistent outbound command and control. | Network Quarantine (Cilium) |
+| **T1496** | Impact | Resource Hijacking | Stealthy execution of crypto-miners (e.g., `xmrig`) disguised as legitimate background processes. | Process SIGKILL (Tetragon) |
 
 ### The CI/CD Validation Pipeline
 
