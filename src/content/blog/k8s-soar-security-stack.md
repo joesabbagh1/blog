@@ -1,7 +1,7 @@
 ---
 author: Joe Sabbagh
 pubDatetime: 2026-06-26
-title: "k8s-soar: Building an Enterprise-Grade Kubernetes SOAR Fortress"
+title: "Automating Cloud-Native Defense: A Deep Dive into k8s-soar"
 featured: true
 tags:
   - kubernetes
@@ -37,8 +37,6 @@ The architecture is built on a "Defense in Depth" model, recognizing that there 
 
 ![Defense in Depth Architecture](../../assets/diagram-architecture.svg)
 
-
-
 ### Prevention: Kyverno
 
 Before a workload even starts, **Kyverno** acts as the gatekeeper. It applies policy-as-code at the Kubernetes admission layer. Kyverno validates incoming manifests to ensure that no privileged containers are launched, sensitive hostPath mounts are blocked, and images are cryptographically signed. If an attacker compromises a CI/CD pipeline and attempts to deploy a malicious pod, Kyverno blocks the deployment before it ever reaches a node.
@@ -64,9 +62,6 @@ The true innovation of the architecture lies in the "R" (Response). Rather than 
 ### Dynamic Automated Workflows
 
 ![SOAR Dynamic Workflows](../../assets/diagram-soar.svg)
-
-
-
 
 Shuffle does not rely on a single, rigid response path; instead, it dynamically adapts its workflow based on the type of threat detected. Playbooks are designed to map specific attack scenarios to appropriate, proportionate responses ranging from simple alerting to aggressive cluster-wide cordoning.
 
@@ -94,11 +89,11 @@ A security stack is only as reliable as its last test. To ensure the architectur
 
 Examples of these scenarios include:
 
-| MITRE ID | Tactic | Technique | Description | Expected SOAR Response |
-| :--- | :--- | :--- | :--- | :--- |
-| **T1611** | Privilege Escalation | Escape to Host | Exploiting permissive configurations to break out of the container and access the underlying node. | Alert & Node Cordon |
-| **T1059 / T1090** | Execution / C2 | Reverse Shell | Establishing a multi-stage reverse shell to establish persistent outbound command and control. | Network Quarantine (Cilium) |
-| **T1496** | Impact | Resource Hijacking | Stealthy execution of crypto-miners (e.g., `xmrig`) disguised as legitimate background processes. | Process SIGKILL (Tetragon) |
+| MITRE ID          | Tactic               | Technique          | Description                                                                                        | Expected SOAR Response      |
+| :---------------- | :------------------- | :----------------- | :------------------------------------------------------------------------------------------------- | :-------------------------- |
+| **T1611**         | Privilege Escalation | Escape to Host     | Exploiting permissive configurations to break out of the container and access the underlying node. | Alert & Node Cordon         |
+| **T1059 / T1090** | Execution / C2       | Reverse Shell      | Establishing a multi-stage reverse shell to establish persistent outbound command and control.     | Network Quarantine (Cilium) |
+| **T1496**         | Impact               | Resource Hijacking | Stealthy execution of crypto-miners (e.g., `xmrig`) disguised as legitimate background processes.  | Process SIGKILL (Tetragon)  |
 
 ### The CI/CD Validation Pipeline
 
