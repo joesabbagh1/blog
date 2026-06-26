@@ -35,17 +35,7 @@ The architecture is built on a "Defense in Depth" model, recognizing that there 
 
 ### Architecture Overview
 
-<div class="mermaid">
-flowchart TD
-    Attacker[Attacker] --> Kyverno(Kyverno Admission Control)
-    Kyverno -- Prevented --> Blocked[Deployment Blocked]
-    Kyverno -- Allowed/Runtime --> Runtime{eBPF Layer}
-    Runtime -->|Detect| Falco[Falco]
-    Runtime -->|Enforce| Tetragon[Tetragon]
-    Tetragon -->|Kernel| Sigkill[SIGKILL Process]
-    Falco -->|Alert| Shuffle[Shuffle SOAR]
-    Shuffle -->|Quarantine| Cilium[Cilium Network Policy]
-</div>
+
 
 ### Prevention: Kyverno
 
@@ -71,18 +61,7 @@ The true innovation of the architecture lies in the "R" (Response). Rather than 
 
 ### Dynamic Automated Workflows
 
-<div class="mermaid">
-flowchart LR
-    Falco[Falco Alert] -->|Webhook| Shuffle(Shuffle Playbook)
-    Shuffle --> Enrich{Enrichment}
-    Enrich -->|Logs| Loki[Loki]
-    Enrich -->|Metrics| Prom[Prometheus]
-    Enrich -->|Traces| Tetragon[Tetragon]
-    Shuffle --> Respond{Response}
-    Respond -->|Isolate| Cilium[Cilium]
-    Respond -->|Notify| Slack[Slack / Jira]
-    Respond -->|Annotate| Grafana[Grafana]
-</div>
+
 
 
 Shuffle does not rely on a single, rigid response path; instead, it dynamically adapts its workflow based on the type of threat detected. Playbooks are designed to map specific attack scenarios to appropriate, proportionate responses ranging from simple alerting to aggressive cluster-wide cordoning.
