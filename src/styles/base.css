@@ -129,3 +129,71 @@
     @apply outline-2 outline-offset-1 outline-skin-fill focus-visible:no-underline focus-visible:outline-dashed;
   }
 }
+
+/* Screenshots in a post: a rounded frame, with the caption (an italic line after the image) beneath. */
+.prose p:has(> img:only-child) {
+  position: relative;
+  margin: 2.25rem 0 0.5rem;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgb(var(--color-card-muted) / 0.55);
+  background: rgb(var(--color-card) / 0.6);
+  box-shadow: 0 22px 44px -22px rgb(0 0 0 / 0.5);
+}
+.prose p:has(> img:only-child) img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 !important;
+  border: 0 !important;
+}
+.prose p:has(> img:only-child) + p:has(> em:only-child) {
+  margin: 0 0 2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+/* Mermaid diagrams, rendered in the browser (see PostDetails.astro). The global `svg` rule
+   gives every svg a 24px icon size, so reset it here. */
+.mermaid-diagram {
+  display: flex;
+  justify-content: center;
+  margin: 1.75rem 0;
+  padding: 1.25rem 1rem;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgb(var(--color-card-muted) / 0.55);
+  background: rgb(var(--color-card) / 0.35);
+}
+.mermaid-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  fill: initial;
+}
+
+.prose p:has(> img:only-child) img {
+  cursor: zoom-in;
+}
+dialog.zoom-dialog {
+  max-width: 96vw;
+  max-height: 96vh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+dialog.zoom-dialog::backdrop {
+  background: rgb(0 0 0 / 0.8);
+}
+dialog.zoom-dialog img {
+  display: block;
+  max-width: 96vw;
+  max-height: 96vh;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  cursor: zoom-out;
+}

@@ -227,3 +227,91 @@ const layoutProps = {
   }
   backToTop();
 </script>
+
+<script>
+  // Turn ```mermaid code blocks into diagrams. The library is only loaded on pages that have one.
+  let counter = 0;
+
+  const palette = (dark: boolean) =>
+    dark
+      ? { background: "#2f3741", primary: "#3f4b5a", border: "#1ad9d9", line: "#1ad9d9", text: "#e6e6e6" }
+      : { background: "#fbfefb", primary: "#e6e6e6", border: "#006cac", line: "#006cac", text: "#282728" };
+
+  async function renderDiagrams() {
+    document.querySelectorAll<HTMLElement>('pre[data-language="mermaid"]').forEach(pre => {
+      const holder = document.createElement("div");
+      holder.className = "mermaid-diagram";
+      // the code element only: the copy button the layout adds to code blocks sits in the <pre> too
+      holder.dataset.code = pre.querySelector("code")?.textContent ?? "";
+      pre.replaceWith(holder);
+    });
+    const holders = document.querySelectorAll<HTMLElement>(".mermaid-diagram");
+    if (!holders.length) return;
+
+    const { default: mermaid } = await import("mermaid");
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    const c = palette(dark);
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: "base",
+      themeVariables: {
+        fontFamily: "inherit",
+        background: c.background,
+        primaryColor: c.primary,
+        primaryBorderColor: c.border,
+        primaryTextColor: c.text,
+        lineColor: c.line,
+        secondaryColor: c.primary,
+        tertiaryColor: c.background,
+        clusterBkg: c.background,
+        clusterBorder: c.border,
+        edgeLabelBackground: c.background,
+      },
+      flowchart: { curve: "basis", htmlLabels: true, padding: 12 },
+    });
+    const theme = dark ? "dark" : "light";
+    for (const holder of holders) {
+      if (holder.dataset.drawn === theme) continue;
+      try {
+        const { svg } = await mermaid.render(`diagram-${counter++}`, holder.dataset.code ?? "");
+        holder.innerHTML = svg;
+        holder.dataset.drawn = theme;
+      } catch {
+        holder.textContent = holder.dataset.code ?? "";
+      }
+    }
+  }
+
+  renderDiagrams();
+  document.addEventListener("astro:page-load", renderDiagrams);
+  // The theme button changes data-theme: draw the diagrams again in the new colours.
+  new MutationObserver(renderDiagrams).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+</script>
+
+<script>
+  // Click a screenshot in a post to see it large; click anywhere or press Escape to close.
+  function setupZoom() {
+    document.querySelectorAll<HTMLImageElement>(".prose p > img:only-child").forEach(img => {
+      if (img.dataset.zoom) return;
+      img.dataset.zoom = "1";
+      img.addEventListener("click", () => {
+        const dialog = document.createElement("dialog");
+        dialog.className = "zoom-dialog";
+        const big = document.createElement("img");
+        big.src = img.currentSrc || img.src;
+        big.alt = img.alt;
+        dialog.append(big);
+        dialog.addEventListener("click", () => dialog.close());
+        dialog.addEventListener("close", () => dialog.remove());
+        document.body.append(dialog);
+        dialog.showModal();
+      });
+    });
+  }
+  setupZoom();
+  document.addEventListener("astro:page-load", setupZoom);
+</script>
