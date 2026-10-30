@@ -31,9 +31,9 @@
       allPosts: "Tous les articles",
       socialLinks: "Liens sociaux :",
       heroText:
-        "Bienvenue sur mon blog, c'est ici que je vais parler principalement de mon homelab et partager ce que je fais et ce que j'apprends. Le homelab tourne sur Kubernetes, où j'héberge mes applications et teste des outils cloud-native.",
+        "Bienvenue sur mon blog ! Je parle surtout de mon homelab, de ce que je fais et de ce que j'apprends. Mon homelab tourne sur Kubernetes, où je déploie divers services et teste des outils cloud-native.",
       heroLine2: "Je suis",
-      heroCertified: "certifié AWS 6 fois",
+      heroCertified: "certifié AWS 7 fois",
       heroLine3: "et je fais actuellement un master en cybersécurité à l'",
       openMenu: "Ouvrir le menu",
       closeMenu: "Fermer le menu",
